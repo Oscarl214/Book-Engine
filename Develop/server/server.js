@@ -8,13 +8,12 @@ const db = require("./config/connection");
 
 // const routes = require("./routes"); //dont need my routes anymore because I will be using GraphQL
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 const app = express();
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: authMiddleware,
-  introspection: true,
 }); //applying my graphql resolvers and typeDefs to make a ApolloServer instance , as well as my auth function
 
 app.use(express.urlencoded({ extended: true }));
