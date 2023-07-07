@@ -9,37 +9,32 @@ import { QUERY_ME } from "../utils/queries";
 import { REMOVE_BOOK } from "../utils/mutations";
 
 const SavedBooks = () => {
-  // const [userData, setUserData] = useState({});
-
-  // use this to determine if `useEffect()` hook needs to run again
-  // const userDataLength = Object.keys(userData).length;
 
   const { loading, data } = useQuery(QUERY_ME);
   const userData = data?.me || {};
 
-  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
-
-  // const getUserData = async () => {
-  //   try {
-  //     const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-  //     if (!token) {
-  //       return false;
-  //     }
-
-  //     const response = await userData(token);
-  //     //using the me query
-  //     if (!response.ok) {
-  //       throw new Error("something went wrong!");
-  //     }
-  //     // const user = await response.json();
-  //     // setUserData(user);
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
-  // getUserData();
+  const [removeBook, { error }] = useMutation(REMOVE_BOOK, {
+    update(cache, { data: { removeBook } }) {
+      try {
+        // Read the user's data from the cache
+        const { me } = cache.readQuery({ query: QUERY_ME });
+  
+        // Update the user's savedBooks array by filtering out the removed book
+        const updatedSavedBooks = me.savedBooks.filter(
+          (book) => book._id !== removeBook._id
+        );
+  
+        // Write the updated user data back to the cache
+        cache.writeQuery({
+          query: QUERY_ME,
+          data: { me: { ...me, savedBooks: updatedSavedBooks } },
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+  });
+  
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
@@ -48,28 +43,13 @@ const SavedBooks = () => {
     if (!token) {
       return false;
     }
-
     try {
-      const { data } = await removeBook({
-        variables: { bookId },
-      });
-      removeBookId(bookId);
+       const {data}= await removeBook({variables: {bookId:bookId }});
+      //deconstructed the bookId property
+      removeBookId(data.bookId);
     } catch (err) {
       console.log(err);
     }
-    //   const response = await removeBook({ variables: { bookId } });
-    //   //using the removeBook mutation
-    //   if (!response.ok) {
-    //     throw new Error("something went wrong!");
-    //   }
-
-    //   const updatedUser = await response.json();
-    //   setUserData(updatedUser);
-    //   // upon success, remove book's id from localStorage
-    //   removeBookId(bookId);
-    // } catch (err) {
-    //   console.error(err);
-    // }
   };
 
   // if data isn't here yet, say so
